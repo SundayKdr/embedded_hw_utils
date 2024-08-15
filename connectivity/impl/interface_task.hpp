@@ -22,7 +22,7 @@ enum class TaskState{
     pending
 };
 
-template<std::size_t tx_buffer_size, std::size_t rx_buffer_size = 8,typename CB = CB>
+template<std::size_t tx_buffer_size, std::size_t rx_buffer_size = 8, typename CB = CB>
 struct InterfaceTask{
     void PlaceData(utils::TxData data){
         if(data.size <= sizeof tx_data_)
@@ -31,7 +31,7 @@ struct InterfaceTask{
 
     void CallBack(){
         if(call_back_)
-            call_back_.value()(rx_data_.data());
+            (*call_back_)(rx_data_.data());
     }
     auto& TxStorage(){ return tx_data_; }
     uint8_t* TxData(){ return tx_data_.data(); }

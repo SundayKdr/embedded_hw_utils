@@ -2,72 +2,44 @@
 
 #include <ranges>
 
-#include "embedded_hw_utils/utils/crc_packet.hpp"
 #include "tx_storage.hpp"
+#include "embedded_hw_utils/connectivity/uart/uart_socket.hpp"
 
-#include "embedded_hw_utils/connectivity/uart/uart_driver.hpp"
-#include "async_tim_tasks/async_tim_tasks.hpp"
+namespace connectivity::uart{
 
-template<typename Monitor>
-struct UartMonitor{
-    using Packet = utils::Packet<8, 1>;
-    using TxStorage = utils::TxStorage<connectivity::uart::tx_buffer_size>;
-protected:
-    UartMonitor(UART_HandleTypeDef* uart_h, Monitor* monitor)
-        :uart_handle_(uart_h)
-        ,monitor_(monitor)
-    {
-        Start();
-    }
+template<typename User>
+struct UartMonitor: Socket<User, 8, 0, 100, false>{
+    using Socket_t = Socket<User, 8, 0, 100, false>;
+
+    UartMonitor(HandleT uart_h, User* monitor)
+        :Socket_t(uart_h, monitor)
+    {}
 
     template<typename ...Args>
     void PlaceAndSend(Args&&... args){
-        tx_storage_.PlaceToStorage(std::forward<Args>(args)...);
+        monitor_txStorage_.PlaceToStorage(std::forward<Args>(args)...);
         SendToUART();
     }
 
     template<typename ...Args>
     void Place(Args&&... args){
-        tx_storage_.PlaceToStorage(std::forward<Args>(args)...);
+        monitor_txStorage_.PlaceToStorage(std::forward<Args>(args)...);
     }
-
 private:
-    Monitor* monitor_;
-    UART_HandleTypeDef* uart_handle_;
-    TxStorage tx_storage_;
-    connectivity::uart::Port::RxStorage rx_storage_;
-    Packet assembled_packet_;
-
-    void HandleUartMsg(){
-        auto size = rx_storage_.getRxSize();
-        if(size == Packet::pack_size)
-            assembled_packet_.Reset();
-
-        assembled_packet_.PlaceData(rx_storage_.dataView(size));
-
-        if(assembled_packet_.isReady()){
-            monitor_->ProcessPacket(assembled_packet_.GetPayloadView());
-            assembled_packet_.Reset();
-        }
-    }
+    monitor::TxStorage<tx_storage_size, false> monitor_txStorage_;
 
     void SendToUART(){
         PlaceTermination();
-        connectivity::uart::PlaceTask(uart_handle_, utils::TxData{tx_storage_.dataPtr(), tx_storage_.cursor()});
-        tx_storage_.Reset();
-    }
-
-    void Start(){
-        using namespace connectivity::uart;
-        Port(uart_handle_)->StartReading();
-        $RunAsync({
-            if(Port(self->uart_handle_)->GetPack(self->rx_storage_))
-                self->HandleUartMsg();
-        }, 100);
+        connectivity::uart::PlaceTask(Socket_t::uart_handle_,
+                                      utils::TxData{monitor_txStorage_.dataPtr(),
+                                                    monitor_txStorage_.cursor()});
+        monitor_txStorage_.Reset();
     }
 
     void PlaceTermination(){
-        static unsigned char term = 0xFF;
-        tx_storage_.StoreBytes(term, term, term);
+        static constexpr unsigned char term = 0xFF;
+        monitor_txStorage_.StoreBytes(term, term, term);
     }
 };
+
+}//namespace connectivity::uart

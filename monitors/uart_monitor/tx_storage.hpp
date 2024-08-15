@@ -4,77 +4,36 @@
 #include <cstdint>
 #include <ranges>
 #include <cstring>
+#include <complex>
 
-namespace utils{
-template<std::size_t storage_size>
-struct TxStorage {
-    auto& at(auto idx){
-        return data_.at(idx);
-    }
-    auto dataView(auto size = storage_size){
-        return std::views::counted( data_.begin(), size );
-    }
-    void Reset(){
-        cursor_ = 0;
-    }
-    bool FitsInRange(std::size_t amount){
-        return cursor_ + amount <= data_.size();
-    }
-    auto currentDataIt(){
-        return std::next(data_.begin(), cursor_);
-    }
-    auto cursor(){
-        return cursor_;
-    }
-    auto& data(){
-        return data_;
-    }
-    auto dataPtr(){
-        return data_.data();
-    }
-    std::size_t size(){
-        return data_.size();
-    }
+#include "embedded_hw_utils/utils/storages/tx_storage.hpp"
+
+namespace connectivity::uart::monitor{
+
+template<std::size_t storage_size, bool use_crc>
+struct TxStorage: utils::TxStorage<storage_size, use_crc> {
+    using BaseStorage = utils::TxStorage<storage_size, use_crc>;
+
     template<typename ...Args>
     void PlaceToStorage(Args&&... args){
-        (PlaceValue(std::forward<Args>(args)), ...);
-    }
-    template<typename ...Args>
-    void StoreBytes(Args&&... args){
-        (StoreByte(std::forward<Args>(args)), ...);
-    }
-private:
-    std::size_t cursor_{0};
-    std::array<uint8_t, storage_size> data_{};
-
-    void StoreByte(uint8_t byte){
-        assert(FitsInRange(1));
-        data_[cursor_++] = byte;
-    }
-
-    template<typename T, std::size_t N>
-    void PlaceValue(T(&array)[N])
-    {
-        auto size = N - 1;
-        assert(FitsInRange(size));
-        std::memcpy(currentDataIt(), array, size);
-        cursor_ += size;
+        (CheckT(std::forward<Args>(args)), ...);
     }
 
     template<typename T>
-    void PlaceValue(T&& array)
-        requires(std::is_bounded_array<T>::value)
-    {
-        auto size = array.size() - 1;
-        assert(FitsInRange(size));
-        std::memcpy(currentDataIt(), array.begin(), size);
-        cursor_ += size;
+    void CheckT(T&& t){
+        if constexpr (std::is_integral_v<T> || std::is_floating_point_v<T>)
+            PlaceValue(std::forward<T>(t));
+        else
+            BaseStorage::PlaceValue(std::forward<T>(t));
     }
-
-    void PlaceValue(float& num){
-        assert(FitsInRange(sizeof(num)));
+protected:
+    template<typename T>
+    void PlaceValue(T num)
+        requires(std::is_floating_point_v<T>)
+    {
+        assert(BaseStorage::FitsInRange(sizeof(num)));
         if(num < 0){
-            StoreByte('-');
+            BaseStorage::StoreByte('-');
             num = -num;
         }
         static constexpr float kPrecision = 0.1;
@@ -85,35 +44,28 @@ private:
             auto weight = std::pow(10.0f, cursor);
             digit = std::floor(num / weight);
             num -= digit * weight;
-            StoreByte('0' + digit);
+            BaseStorage::StoreByte('0' + digit);
             if(cursor == 0)
-                StoreByte('.');
+                BaseStorage::StoreByte('.');
             cursor--;
         }
-        StoreByte('0');
+        BaseStorage::StoreByte('0');
     }
 
     template<typename T>
-    void PlaceValue(T&& num)
+    void PlaceValue(T num)
+        requires(std::is_integral_v<T>)
     {
-        assert(FitsInRange(sizeof(T)));
+        assert(BaseStorage::FitsInRange(sizeof(T)));
         if constexpr(std::is_same_v<std::remove_reference_t<T>, char>){
-            StoreByte(num);
+            BaseStorage::StoreByte(num);
             return;
         }
-        auto ptr = std::bit_cast<char*>(std::next(data_.begin(), cursor_));
+        auto ptr = std::bit_cast<char*>(std::next(BaseStorage::data_.begin(), BaseStorage::cursor()));
         auto bytes_written = std::sprintf(ptr, "%d", num);
         if(bytes_written > 0)
-            cursor_ += bytes_written;
-    }
-
-    template<typename ...Arrays>
-    void PlaceArraysToStorage(Arrays&&... arrays){
-        auto add_to_storage = [&]<typename T, std::size_t N>(T(&array)[N]){
-            PlaceArr(std::forward<decltype(array)>(array));
-        };
-        (add_to_storage(arrays), ...);
+            BaseStorage::MoveCursor(bytes_written);
     }
 };
 
-}//namespace utils
+}//namespace connectivity::uart::monitor

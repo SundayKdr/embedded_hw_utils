@@ -2,7 +2,7 @@
 
 #include "uart_task.hpp"
 #include "embedded_hw_utils/connectivity/impl/interface_port.hpp"
-#include "embedded_hw_utils/utils/rx_storage.hpp"
+#include "embedded_hw_utils/utils/storages/rx_storage.hpp"
 
 namespace connectivity::uart{
 
@@ -32,7 +32,7 @@ struct Port final: InterfacePort<HandleT, Task, tasks_queue_size>{
         rx_pack_.setReady(size);
     }
 
-    bool GetPack(RxStorage& pack){
+    bool GetPack(auto& pack){
         if(!rx_pack_.isReady())
             return false;
         pack = rx_pack_;

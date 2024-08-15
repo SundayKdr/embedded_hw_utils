@@ -6,7 +6,7 @@
 
 namespace connectivity::uart{
 
-using InterfaceTask = InterfaceTask<tx_buffer_size>;
+using InterfaceTask = InterfaceTask<tx_storage_size>;
 
 struct Task final: InterfaceTask{
 
