@@ -38,6 +38,9 @@ struct Socket{
         tx_storage_.PlaceToStorage(std::forward<Args>(args)...);
     }
 
+    void Send(){
+        SendToUART();
+    }
 protected:
     User* user_;
     HandleT uart_handle_;

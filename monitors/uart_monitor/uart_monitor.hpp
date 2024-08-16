@@ -7,10 +7,10 @@
 
 namespace connectivity::uart{
 
-template<typename User>
-struct UartMonitor: Socket<User, 8, 0, 100, false>{
-    using Socket_t = Socket<User, 8, 0, 100, false>;
-
+template<typename User, std::size_t rx_packet_size>
+struct UartMonitor: Socket<User, rx_packet_size, 0, 100, false>{
+    using Socket_t = Socket<User, rx_packet_size, 0, 100, false>;
+protected:
     UartMonitor(HandleT uart_h, User* monitor)
         :Socket_t(uart_h, monitor)
     {}
