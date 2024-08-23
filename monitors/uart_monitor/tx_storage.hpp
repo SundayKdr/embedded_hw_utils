@@ -61,7 +61,7 @@ protected:
             BaseStorage::StoreByte(num);
             return;
         }
-        auto ptr = std::bit_cast<char*>(std::next(BaseStorage::data_.begin(), BaseStorage::cursor()));
+        auto ptr = std::bit_cast<char*>(std::ranges::next(BaseStorage::data_.begin(), BaseStorage::cursor()));
         auto bytes_written = std::sprintf(ptr, "%d", num);
         if(bytes_written > 0)
             BaseStorage::MoveCursor(bytes_written);

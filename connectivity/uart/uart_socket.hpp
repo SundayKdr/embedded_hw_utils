@@ -10,6 +10,12 @@
 
 namespace connectivity::uart{
 
+template<typename T>
+concept DavaViewConcept = requires(T t)
+{
+    t.operator[](t.size()-1);
+};
+
 template<typename User,
             std::size_t rx_packet_size,
             std::size_t tx_storage_size_,

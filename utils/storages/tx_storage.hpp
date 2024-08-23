@@ -17,7 +17,7 @@ struct TxStorage{
         return data_.at(idx);
     }
     auto dataView(){
-        return std::views::counted( data_.begin(), storage_size );
+        return std::ranges::views::counted( data_.begin(), storage_size );
     }
     void Reset(){
         cursor_ = dlc_width;
@@ -26,7 +26,7 @@ struct TxStorage{
         return cursor() + amount <= data_.size();
     }
     auto currentDataIt(){
-        return std::next(data_.begin(), cursor());
+        return std::ranges::next(data_.begin(), cursor());
     }
     auto cursor(){
         return cursor_;
@@ -114,7 +114,7 @@ protected:
     }
 
     void PlaceCRC(){
-        auto payload_section_it = std::next(data_.begin(), dlc_width);
+        auto payload_section_it = std::ranges::next(data_.begin(), dlc_width);
         auto payload_size = cursor() - dlc_width;
         auto crc = computation::crc::CalcCRC(payload_section_it, payload_size);
 

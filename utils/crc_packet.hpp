@@ -27,7 +27,7 @@ struct Packet{
         crc_pass_ = false;
     }
 
-    auto GetPayloadView() { return std::views::counted(std::next(storage_.begin(), service_width_at_begin),
+    auto GetPayloadView() { return std::ranges::views::counted(std::ranges::next(storage_.begin(), service_width_at_begin),
                                                        pack_size ); }
     [[nodiscard]] const auto& data() const{ return storage_; }
     [[nodiscard]] bool isReady() const{ return crc_pass_;}
@@ -58,7 +58,7 @@ private:
     }
 
     uint16_t GetCRCFromPack(){
-        auto packet_end_it = std::next(storage_.begin(), pack_size);
+        auto packet_end_it = std::ranges::next(storage_.begin(), pack_size);
         auto start_byte = std::prev(packet_end_it, 1);
         auto end_byte = std::prev(packet_end_it, 2);
         return (*start_byte << 8) | *end_byte;
@@ -70,7 +70,7 @@ private:
 
     [[nodiscard]]uint16_t CalcCRC() const{
         uint16_t crc = 0;
-        auto payload_section_it = std::next(storage_.begin(), service_width_at_begin);
+        auto payload_section_it = std::ranges::next(storage_.begin(), service_width_at_begin);
         for(std::size_t i = 0; i < payload_size; ++i, payload_section_it++)
             crc += *payload_section_it;
         crc = ((~crc + 1) & 0xffff);
