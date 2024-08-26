@@ -27,7 +27,7 @@ struct RxPacket{
         crc_pass_ = false;
     }
 
-    auto GetPayloadView() { return std::views::counted(std::next(storage_.begin(), dlc_width),
+    auto GetPayloadView() { return std::ranges::views::counted(std::ranges::next(storage_.begin(), dlc_width),
                                                        pack_size ); }
     [[nodiscard]] const auto& data() const{ return storage_; }
     [[nodiscard]] bool isReady() const{ return crc_pass_;}
@@ -48,7 +48,7 @@ private:
     void CheckCRC(){
         dlc_ = storage_.front();
         auto expected_crc = GetCRCFromPack();
-        auto payload_section_it = std::next(storage_.begin(), dlc_width);
+        auto payload_section_it = std::ranges::next(storage_.begin(), dlc_width);
         auto calc_crc = computation::crc::CalcCRC(payload_section_it, payload_size);
 
         if(expected_crc == calc_crc)
@@ -60,7 +60,7 @@ private:
     }
 
     uint16_t GetCRCFromPack(){
-        auto packet_end_it = std::next(storage_.begin(), pack_size);
+        auto packet_end_it = std::ranges::next(storage_.begin(), pack_size);
         auto start_byte = std::prev(packet_end_it, 1);
         auto end_byte = std::prev(packet_end_it, 2);
         return (*start_byte << 8) | *end_byte;

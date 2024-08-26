@@ -17,7 +17,7 @@ struct TxStorage{
         return data_.at(idx);
     }
     auto dataView(){
-        return std::views::counted( data_.begin(), storage_size );
+        return std::ranges::views::counted( data_.begin(), storage_size );
     }
     void Reset(){
         cursor_ = dlc_width;
@@ -26,25 +26,34 @@ struct TxStorage{
         return cursor() + amount <= data_.size();
     }
     auto currentDataIt(){
-        return std::next(data_.begin(), cursor());
+        return std::ranges::next(data_.begin(), cursor());
     }
+
     auto cursor(){
-        return cursor_;
+        if constexpr (crc_packet)
+            return cursor_;
+        else
+            return cursor_ - dlc_width;
     }
+
     auto& data(){
         return data_;
     }
+
     auto dataPtr(){
-        return data_.data();
+        auto ptr = data_.data();
+        if constexpr(crc_packet)
+            return ptr;
+        else
+            return ptr++; //dlc_width
     }
+
     auto MakeTxData(){
         if constexpr(crc_packet){
             PlaceCRC();
             PlaceDlc();
-            return TxData{dataPtr(), cursor()};
         }
-        else
-            return TxData{dataPtr()++, cursor()};
+        return TxData{dataPtr(), cursor()};
     }
 
     std::size_t size(){
@@ -104,17 +113,17 @@ protected:
     template<typename ...Arrays>
     void PlaceArraysToStorage(Arrays&&... arrays){
         auto add_to_storage = [&]<typename T, std::size_t N>(T(&array)[N]){
-            PlaceArr(std::forward<decltype(array)>(array));
+            PlaceValue(std::forward<decltype(array)>(array));
         };
         (add_to_storage(arrays), ...);
     }
 
     void PlaceDlc(){
-        data_[0] = cursor();
+        data_[0] = cursor() - dlc_width;
     }
 
     void PlaceCRC(){
-        auto payload_section_it = std::next(data_.begin(), dlc_width);
+        auto payload_section_it = std::ranges::next(data_.begin(), dlc_width);
         auto payload_size = cursor() - dlc_width;
         auto crc = computation::crc::CalcCRC(payload_section_it, payload_size);
 

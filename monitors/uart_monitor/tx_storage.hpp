@@ -16,20 +16,20 @@ struct TxStorage: utils::TxStorage<storage_size, use_crc> {
 
     template<typename ...Args>
     void PlaceToStorage(Args&&... args){
-        (CheckT(std::forward<Args>(args)), ...);
+        (CheckSpecialT(std::forward<Args>(args)), ...);
     }
 
     template<typename T>
-    void CheckT(T&& t){
-        if constexpr (std::is_integral_v<T> || std::is_floating_point_v<T>)
+    void CheckSpecialT(T&& t){
+        if constexpr (std::is_integral_v<std::remove_cvref_t<T>> || std::is_floating_point_v<std::remove_cvref_t<T>>)
             PlaceValue(std::forward<T>(t));
         else
             BaseStorage::PlaceValue(std::forward<T>(t));
     }
 protected:
     template<typename T>
-    void PlaceValue(T num)
-        requires(std::is_floating_point_v<T>)
+    void PlaceValue(T&& num)
+        requires(std::is_floating_point_v<std::remove_cvref_t<T>>)
     {
         assert(BaseStorage::FitsInRange(sizeof(num)));
         if(num < 0){
@@ -53,15 +53,15 @@ protected:
     }
 
     template<typename T>
-    void PlaceValue(T num)
-        requires(std::is_integral_v<T>)
+    void PlaceValue(T&& num)
+        requires(std::is_integral_v<std::remove_cvref_t<T>>)
     {
         assert(BaseStorage::FitsInRange(sizeof(T)));
         if constexpr(std::is_same_v<std::remove_reference_t<T>, char>){
             BaseStorage::StoreByte(num);
             return;
         }
-        auto ptr = std::bit_cast<char*>(std::next(BaseStorage::data_.begin(), BaseStorage::cursor()));
+        auto ptr = std::bit_cast<char*>(std::ranges::next(BaseStorage::data_.begin(), BaseStorage::cursor()));
         auto bytes_written = std::sprintf(ptr, "%d", num);
         if(bytes_written > 0)
             BaseStorage::MoveCursor(bytes_written);
