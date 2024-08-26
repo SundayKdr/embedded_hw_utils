@@ -30,9 +30,7 @@ private:
 
     void SendToUART(){
         PlaceTermination();
-        connectivity::uart::PlaceTask(Socket_t::uart_handle_,
-                                      utils::TxData{monitor_txStorage_.dataPtr(),
-                                                    monitor_txStorage_.cursor()});
+        connectivity::uart::PlaceTask(Socket_t::uart_handle_, monitor_txStorage_.MakeTxData());
         monitor_txStorage_.Reset();
     }
 

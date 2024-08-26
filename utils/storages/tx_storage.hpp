@@ -28,23 +28,32 @@ struct TxStorage{
     auto currentDataIt(){
         return std::ranges::next(data_.begin(), cursor());
     }
+
     auto cursor(){
-        return cursor_;
+        if constexpr (crc_packet)
+            return cursor_;
+        else
+            return cursor_ - dlc_width;
     }
+
     auto& data(){
         return data_;
     }
+
     auto dataPtr(){
-        return data_.data();
+        auto ptr = data_.data();
+        if constexpr(crc_packet)
+            return ptr;
+        else
+            return ptr++; //dlc_width
     }
+
     auto MakeTxData(){
         if constexpr(crc_packet){
             PlaceCRC();
             PlaceDlc();
-            return TxData{dataPtr(), cursor()};
         }
-        else
-            return TxData{dataPtr()++, cursor()};
+        return TxData{dataPtr(), cursor()};
     }
 
     std::size_t size(){
@@ -104,13 +113,13 @@ protected:
     template<typename ...Arrays>
     void PlaceArraysToStorage(Arrays&&... arrays){
         auto add_to_storage = [&]<typename T, std::size_t N>(T(&array)[N]){
-            PlaceArr(std::forward<decltype(array)>(array));
+            PlaceValue(std::forward<decltype(array)>(array));
         };
         (add_to_storage(arrays), ...);
     }
 
     void PlaceDlc(){
-        data_[0] = cursor();
+        data_[0] = cursor() - dlc_width;
     }
 
     void PlaceCRC(){
