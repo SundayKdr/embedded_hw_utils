@@ -53,7 +53,14 @@ namespace StepperMotor{
         StepperMotorBase(StepperMotorBase&) = delete;
         StepperMotorBase(StepperMotorBase&&)= delete;
 
-    protected:
+        void StopMotor(){
+            HAL_TIM_PWM_Stop_IT(htim_, timChannel_);
+            enable_pin_.setValue(pin_board::HIGH);
+            motorMoving_ = false;
+            mode_ = Mode::IDLE;
+            event_ = EVENT_STOP;
+        }
+
         [[gnu::always_inline]] void MotorRefresh(){
             if(mode_ == IDLE || mode_ == Mode::in_ERROR)
                 return;
@@ -62,6 +69,7 @@ namespace StepperMotor{
             AppCorrection();
         }
 
+    protected:
         virtual void AppCorrection() = 0;
         virtual void AccelerationImpl() = 0;
 
@@ -79,14 +87,6 @@ namespace StepperMotor{
             StartMotor(steps);
         }
 
-        [[gnu::always_inline]] void StopMotor(){
-            HAL_TIM_PWM_Stop_IT(htim_, timChannel_);
-//            enable_pin_.setValue(pin_board::HIGH);
-            motorMoving_ = false;
-            mode_ = Mode::IDLE;
-            event_ = EVENT_STOP;
-        }
-
         [[gnu::always_inline]] void ChangeDirectionAndGo(uint32_t steps){
             ChangeDirection();
             StartMotor(steps);
@@ -98,9 +98,18 @@ namespace StepperMotor{
             CalcRegValue();
         }
 
+        void RemoveStepsFromTask(uint32_t steps) {
+            steps_to_go_ -= steps;
+            CalcRegValue();
+        }
+
         void SetStepsToGo(uint32_t steps) {
             steps_to_go_ = steps;
             mode_ = Mode::ACCEL;
+        }
+
+        void SetMode(Mode mode){
+            mode_ = mode;
         }
 
         explicit StepperMotorBase(StepperMotor::StepperCfg& cfg)
@@ -129,12 +138,20 @@ namespace StepperMotor{
             HAL_TIM_PWM_Start_IT(htim_, timChannel_);
         }
 
+        void SetDirInvertion(bool val){
+            directionInverted_ = val;
+        }
+
+        [[gnu::always_inline]] void ChangeDirection(){
+            SetDirection(currentDirection_ == Motor::Direction::FORWARD ? Direction::BACKWARDS : Direction::FORWARD);
+        }
+
     private:
         uint32_t steps_to_go_ {0};
-        uint32_t task_step_{0};
-        uint32_t accel_step_{0};
+        uint32_t task_step_ {0};
+        uint32_t accel_step_ {0};
 
-        long long uSec_accel_{0};
+        long long uSec_accel_ {0};
 
         uint32_t Vmin_{0};
         uint32_t Vmax_{0};
@@ -170,10 +187,6 @@ namespace StepperMotor{
                 __HAL_TIM_SET_AUTORELOAD(htim_, UINT16_MAX);
                 __HAL_TIM_SET_COMPARE(htim_, timChannel_, UINT16_MAX / 2);
             }
-        }
-
-        [[gnu::always_inline]] void ChangeDirection(){
-            SetDirection(currentDirection_ == Motor::Direction::FORWARD ? Direction::BACKWARDS : Direction::FORWARD);
         }
 
         void SetDirection(Direction newDirection){
@@ -237,16 +250,16 @@ namespace StepperMotor{
         }
 
 public:
-        [[gnu::always_inline]] [[nodiscard]] bool IsMotorMoving() const { return motorMoving_;}
-        [[gnu::always_inline]] [[nodiscard]] MOTOR_EVENT GetEvent() const { return event_;}
-        [[gnu::always_inline]] [[nodiscard]] auto StepsToGo() const { return steps_to_go_; }
-        [[gnu::always_inline]] [[nodiscard]] auto CurrentStep() const { return task_step_; }
-        [[gnu::always_inline]] [[nodiscard]] auto CurrentDirection() const { return currentDirection_; }
-        [[gnu::always_inline]] [[nodiscard]] auto GetTimHandler() const { return  htim_;}
-        [[gnu::always_inline]] [[nodiscard]] auto GetTotalRangeSteps() const {return kCriticalNofSteps_;}
-        [[gnu::always_inline]] [[nodiscard]] auto TimeOfAccelPhase() const {return uSec_accel_;}
-        [[gnu::always_inline]] [[nodiscard]] auto CurrentMoveMode() const { return mode_; };
-        [[gnu::always_inline]] [[nodiscard]] auto CurrentMinSpeed() const { return Vmin_; };
-        [[gnu::always_inline]] [[nodiscard]] auto CurrentMaxSpeed() const { return Vmax_; };
+        [[nodiscard]] bool IsMotorMoving() const { return motorMoving_;}
+        [[nodiscard]] MOTOR_EVENT GetEvent() const { return event_;}
+        [[nodiscard]] auto StepsToGo() const { return steps_to_go_; }
+        [[nodiscard]] auto CurrentStep() const { return task_step_; }
+        [[nodiscard]] auto CurrentDirection() const { return currentDirection_; }
+        [[nodiscard]] auto GetTimHandler() const { return  htim_;}
+        [[nodiscard]] auto GetTotalRangeSteps() const {return kCriticalNofSteps_;}
+        [[nodiscard]] auto TimeOfAccelPhase() const {return uSec_accel_;}
+        [[nodiscard]] auto CurrentMoveMode() const { return mode_; };
+        [[nodiscard]] auto CurrentMinSpeed() const { return Vmin_; };
+        [[nodiscard]] auto CurrentMaxSpeed() const { return Vmax_; };
     };
 } //namespace stepper_motor
