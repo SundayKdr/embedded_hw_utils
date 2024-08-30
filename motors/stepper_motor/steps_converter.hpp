@@ -5,4 +5,4 @@
 
 #define $mSTEPS(v)                  int((v) * $mStep_)
 #define $uSec_(htim_psc)            (SystemCoreClock / (htim_psc))
-#define $rampT_(val)                uint32_t( (val)/$mStep_ * $uSec_($timPcs_))
+#define $rampT_(val)                uint32_t( (val)/$mStep_ * $uSec_($timPcs_) )

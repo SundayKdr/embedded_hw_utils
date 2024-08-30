@@ -56,7 +56,7 @@ namespace MotorSpecial {
             UpdateConfig(cfg);
         }
 
-        void UpdateConfig(AccelCfg &cfg){
+        void UpdateConfig(AccelCfg cfg){
             accel_type_ = cfg.accel_type;
             A_ = cfg.A;
             if (cfg.ramp_time != T_ || cfg.Vmax != config_Vmax_) {

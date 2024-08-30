@@ -55,10 +55,14 @@ namespace StepperMotor{
 
         void StopMotor(){
             HAL_TIM_PWM_Stop_IT(htim_, timChannel_);
-            enable_pin_.setValue(pin_board::HIGH);
+//            enable_pin_.setValue(pin_board::HIGH);
             motorMoving_ = false;
             mode_ = Mode::IDLE;
             event_ = EVENT_STOP;
+        }
+
+        void StandByModeOn(){
+            enable_pin_.setValue(pin_board::HIGH);
         }
 
         [[gnu::always_inline]] void MotorRefresh(){
@@ -89,23 +93,22 @@ namespace StepperMotor{
 
         [[gnu::always_inline]] void ChangeDirectionAndGo(uint32_t steps){
             ChangeDirection();
-            StartMotor(steps);
-        }
-
-        void AddStepsToTask(uint32_t steps) {
-            mode_ = Mode::ACCEL;
-            steps_to_go_ += steps;
-            CalcRegValue();
-        }
-
-        void RemoveStepsFromTask(uint32_t steps) {
-            steps_to_go_ -= steps;
-            CalcRegValue();
+            steps_to_go_ = steps;
         }
 
         void SetStepsToGo(uint32_t steps) {
             steps_to_go_ = steps;
             mode_ = Mode::ACCEL;
+        }
+
+        void CorrectStepsToGo(int correction){
+            if(correction < 0)
+                assert(-correction < steps_to_go_);
+            steps_to_go_ += correction;
+        }
+
+        void CorrectCurrentStep(int correction){
+            task_step_ += correction;
         }
 
         void SetMode(Mode mode){
@@ -138,18 +141,19 @@ namespace StepperMotor{
             HAL_TIM_PWM_Start_IT(htim_, timChannel_);
         }
 
-        void SetDirInvertion(bool val){
+        void SetDirInversion(bool val){
             directionInverted_ = val;
         }
 
         [[gnu::always_inline]] void ChangeDirection(){
+            ResetMotorData();
             SetDirection(currentDirection_ == Motor::Direction::FORWARD ? Direction::BACKWARDS : Direction::FORWARD);
         }
 
     private:
-        uint32_t steps_to_go_ {0};
-        uint32_t task_step_ {0};
-        uint32_t accel_step_ {0};
+        int task_step_ {0};
+        int steps_to_go_ {0};
+        int accel_step_ {0};
 
         long long uSec_accel_ {0};
 
@@ -233,14 +237,15 @@ namespace StepperMotor{
 
                 case Mode::DECCEL:
                 {
-                    if(V_ > Vmin_)
+                    if(V_ > Vmin_){
                         AccelerationImpl();
+                        accel_step_--;
+                        uSec_accel_ -= timer_tick_Hz_ / V_;
+                    }
                     else if(V_ < Vmin_ || V_ == 0){
                         V_ = Vmin_;
                         mode_ = Mode::CONST;
                     }
-                    accel_step_--;
-                    uSec_accel_ -= timer_tick_Hz_ / V_;
                 }
                 break;
 
