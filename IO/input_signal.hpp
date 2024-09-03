@@ -54,12 +54,19 @@ struct InputSignal{
     [[nodiscard]] constexpr pin_board::logic_level getState() const {
         return signal_state_;
     }
+
+    bool getRawState(){
+        if(pin_.IsInverted())
+            return !pin_.getState();
+        else
+            return pin_.getState();
+    }
 private:
     pin_board::PIN<pin_board::Readable> pin_;
     pin_board::logic_level signal_state_ {pin_board::LOW};
     uint32_t debounce_time_;
     uint32_t active_time_{0};
-    bool last_pin_connection_state_ {false};
+    pin_board::logic_level last_pin_connection_state_ {pin_board::LOW};
 
     constexpr void SetState(pin_board::logic_level level){
         signal_state_ = level;

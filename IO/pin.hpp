@@ -113,6 +113,9 @@ namespace pin_board{
             CalcPosition();
         };
 
+        bool IsInverted(){
+            return inverted_;
+        }
     protected:
     private:
         logic_level currentState_ = LOW;

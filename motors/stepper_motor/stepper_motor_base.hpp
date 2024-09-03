@@ -93,7 +93,8 @@ namespace StepperMotor{
 
         [[gnu::always_inline]] void ChangeDirectionAndGo(uint32_t steps){
             ChangeDirection();
-            steps_to_go_ = steps;
+            if(!motorMoving_)
+                StartMotor(steps);
         }
 
         void SetStepsToGo(uint32_t steps) {
@@ -104,7 +105,9 @@ namespace StepperMotor{
         void CorrectStepsToGo(int correction){
             if(correction < 0)
                 assert(-correction < steps_to_go_);
+            mode_ = Mode::ACCEL;
             steps_to_go_ += correction;
+            CalcRegValue();
         }
 
         void CorrectCurrentStep(int correction){
