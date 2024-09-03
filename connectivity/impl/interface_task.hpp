@@ -49,6 +49,7 @@ struct InterfaceTask{
     InterfaceTask(utils::TxData data)
         :tx_size_(data.size)
         ,type_(transmit)
+        ,rx_size_(0)
     {
         PlaceData(data);
     }
@@ -57,6 +58,7 @@ struct InterfaceTask{
         :call_back_(call_back)
         ,tx_size_(data.size)
         ,type_(transmit)
+        ,rx_size_(0)
     {
         PlaceData(data);
     }
@@ -65,11 +67,13 @@ struct InterfaceTask{
         :call_back_(call_back)
         ,rx_size_(rx_size)
         ,type_(receive)
+        ,tx_size_(0)
     {}
 
     InterfaceTask(std::size_t rx_size)
         :rx_size_(rx_size)
         ,type_(receive)
+        ,tx_size_(0)
     {}
 
     InterfaceTask(utils::TxData data, std::size_t rx_size, CB call_back)

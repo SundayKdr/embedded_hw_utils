@@ -67,7 +67,7 @@ private:
     void PollPort()
     {
         if(auto pack_opt = port_.Read(); pack_opt)
-            SendAll(pack_opt.value());
+            SendAll(*pack_opt);
         port_.Trans();
     }
 

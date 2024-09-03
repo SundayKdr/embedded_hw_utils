@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <ranges>
 
-#include "embedded_hw_utils/utils/crc/crc16.hpp"
+#include "embedded_hw_utils/utils/computation/crc/crc16.hpp"
 
 namespace utils{
 

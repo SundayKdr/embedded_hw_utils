@@ -70,8 +70,8 @@ struct InterfacePort{
     }
 
 protected:
-    Task_t current_task_;
-    utils::Queue<Task_t, queue_size> tasks_;
+    Task_t current_task_{};
+    utils::Queue<Task_t, queue_size> tasks_{};
     Hadle_t handle_ {nullptr};
 
     virtual void TaskPreProcedure() = 0;

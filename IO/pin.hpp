@@ -118,8 +118,8 @@ namespace pin_board{
         }
     protected:
     private:
-        logic_level currentState_ = LOW;
         GPIO_TypeDef* port_{nullptr};
+        logic_level currentState_ = LOW;
         uint16_t pin_{0};
         uint8_t position_{0};
         bool inverted_ = false;

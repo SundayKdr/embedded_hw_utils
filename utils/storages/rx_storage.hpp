@@ -8,7 +8,7 @@ namespace utils{
 template<std::size_t storage_size>
 struct RxStorage {
     auto dataView(auto size){
-        return std::views::counted( data_.begin(), size );
+        return std::ranges::views::counted( data_.begin(), size );
     }
     auto& data(){
         return data_;

@@ -53,7 +53,7 @@ struct Port
 		return false;
 	}
 
-	bool OnRX(FDCAN_RxHeaderTypeDef header,  uint8_t* const data){
+	bool OnRX(const FDCAN_RxHeaderTypeDef& header,  uint8_t* const data){
 		return rx_queue_.push(Pack{header.Identifier, static_cast<uint8_t>(header.DataLength >> 16), data});
 	}
 
@@ -69,7 +69,7 @@ struct Port
 private:
 	FDCAN_TxHeaderTypeDef header_;
     FDCAN_HandleTypeDef* handler_ {nullptr};
-    utils::Queue<Pack, RXQ_SIZE> rx_queue_;
-    utils::Queue<Pack, TXQ_SIZE> tx_queue_;
+    utils::Queue<Pack, RXQ_SIZE> rx_queue_{};
+    utils::Queue<Pack, TXQ_SIZE> tx_queue_{};
 };
 }

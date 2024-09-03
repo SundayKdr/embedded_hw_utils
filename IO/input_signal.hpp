@@ -56,10 +56,7 @@ struct InputSignal{
     }
 
     bool getRawState(){
-        if(pin_.IsInverted())
-            return !pin_.getState();
-        else
-            return pin_.getState();
+        return pin_.getState();
     }
 private:
     pin_board::PIN<pin_board::Readable> pin_;

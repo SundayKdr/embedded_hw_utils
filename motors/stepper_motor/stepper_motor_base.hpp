@@ -105,9 +105,8 @@ namespace StepperMotor{
         void CorrectStepsToGo(int correction){
             if(correction < 0)
                 assert(-correction < steps_to_go_);
-            mode_ = Mode::ACCEL;
             steps_to_go_ += correction;
-            CalcRegValue();
+            mode_ = Mode::ACCEL;
         }
 
         void CorrectCurrentStep(int correction){
