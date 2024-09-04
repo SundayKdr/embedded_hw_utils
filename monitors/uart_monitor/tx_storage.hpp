@@ -19,24 +19,16 @@ struct TxStorage: utils::TxStorage<storage_size, use_crc> {
         (CheckSpecialT(std::forward<Args>(args)), ...);
     }
 
-    template<typename T>
+    template<typename T, typename Trr = std::remove_cvref_t<T>>
     void CheckSpecialT(T&& t){
-        if constexpr (std::is_integral_v<std::remove_cvref_t<T>> || std::is_floating_point_v<std::remove_cvref_t<T>>)
+        if constexpr (std::is_integral_v<Trr> || std::is_floating_point_v<Trr>)
             PlaceValue(std::forward<T>(t));
-        else if constexpr (std::is_enum_v<std::remove_cvref_t<T>>)
+        else if constexpr (std::is_enum_v<Trr>)
             PlaceValue(static_cast<int>(t));
         else
             BaseStorage::PlaceValue(std::forward<T>(t));
     }
-//    template<typename T, typename Trr=std::remove_cvref_t<T>>
-//    void CheckSpecialT(T&& t){
-//        if constexpr (std::is_integral_v<Trr> || std::is_floating_point_v<Trr>)
-//            PlaceValue(std::forward<T>(t));
-//        else if constexpr (std::is_enum_v<Trr>)
-//            PlaceValue(static_cast<int>(t));
-//        else
-//            BaseStorage::PlaceValue(std::forward<T>(t));
-//    }
+
 protected:
     template<typename T>
     void PlaceValue(T&& num)

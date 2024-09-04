@@ -93,6 +93,7 @@ namespace StepperMotor{
 
         [[gnu::always_inline]] void ChangeDirectionAndGo(uint32_t steps){
             ChangeDirection();
+            steps_to_go_ = steps;
             if(!motorMoving_)
                 StartMotor(steps);
         }
@@ -199,7 +200,7 @@ namespace StepperMotor{
             currentDirection_ = newDirection;
             if(directionInverted_)
                 direction_pin_.setValue(currentDirection_ == Motor::Direction::FORWARD ?
-                                        pin_board::logic_level(Direction::BACKWARDS) : pin_board::logic_level(Direction::FORWARD));
+                        pin_board::logic_level(Direction::BACKWARDS) : pin_board::logic_level(Direction::FORWARD));
             else
                 direction_pin_.setValue(pin_board::logic_level(newDirection));
         }
