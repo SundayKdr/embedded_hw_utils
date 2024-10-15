@@ -1,6 +1,8 @@
 #pragma once
 
-#include "array"
+#include <array>
+#include <ranges>
+
 #include "fdcan.h"
 #include "impl/can_port.hpp"
 #include "can_client.hpp"
