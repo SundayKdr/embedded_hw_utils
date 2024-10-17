@@ -31,7 +31,7 @@ struct TxStorage: utils::TxStorage<storage_size, use_crc> {
 
 protected:
     template<typename T>
-    void PlaceValue(T&& num)
+    void PlaceValue(T num)
         requires(std::is_floating_point_v<std::remove_cvref_t<T>>)
     {
         assert(BaseStorage::FitsInRange(sizeof(num)));
@@ -56,7 +56,7 @@ protected:
     }
 
     template<typename T>
-    void PlaceValue(T&& num)
+    void PlaceValue(T num)
         requires(std::is_integral_v<std::remove_cvref_t<T>>)
     {
         assert(BaseStorage::FitsInRange(sizeof(T)));
