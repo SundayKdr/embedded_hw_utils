@@ -27,6 +27,6 @@ struct Pack {
 
     uint32_t id{0};
     uint8_t dlc{0};
-    std::array<uint8_t, payload_size> data;
+    std::array<uint8_t, payload_size> data{};
 };
 }

@@ -12,7 +12,7 @@ namespace encoder{
 
     struct Event{
         Direction dir{Direction::FORWARD};
-        float mm{0};
+        uint32_t mm{0};
         bool has_update{false};
     };
 }
@@ -46,7 +46,7 @@ struct Encoder{
         return static_cast<encoder::Direction>(is_counting_down);
     }
 
-    [[nodiscard]] float ConvertTicksToMm(uint32_t ticks) const{
+    [[nodiscard]] uint32_t ConvertTicksToMm(uint32_t ticks) const{
         return ticks * conv_coef_;
     }
 
