@@ -41,11 +41,7 @@ struct TxStorage{
     }
 
     auto dataPtr(){
-        auto ptr = data_.data();
-        if constexpr(crc_packet)
-            return ptr;
-        else
-            return ptr++; //dlc_width
+        return data_.data();
     }
 
     auto MakeTxData(){
