@@ -21,7 +21,7 @@ struct TxStorage: utils::TxStorage<storage_size, use_crc> {
 
     template<typename T, typename Trr = std::remove_cvref_t<T>>
     void CheckSpecialT(T&& t){
-        if constexpr (std::is_integral_v<Trr> || std::is_floating_point_v<Trr>)
+        if constexpr (std::is_integral_v<Trr> || std::is_floating_point_v<Trr> || std::same_as<Trr, std::string_view>)
             PlaceValue(std::forward<T>(t));
         else if constexpr (std::is_enum_v<Trr>)
             PlaceValue(static_cast<int>(t));
@@ -68,6 +68,14 @@ protected:
         auto bytes_written = std::sprintf(ptr, "%d", num);
         if(bytes_written > 0)
             BaseStorage::MoveCursor(bytes_written);
+    }
+
+    void PlaceValue(std::string_view str)
+    {
+        for(auto char_ : str)
+            BaseStorage::StoreByte(char_);
+        BaseStorage::StoreByte('\r');
+        BaseStorage::StoreByte('\n');
     }
 };
 
