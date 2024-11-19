@@ -9,7 +9,7 @@ namespace connectivity::uart{
 struct Port final: InterfacePort<HandleT, Task, tasks_queue_size>{
     using RxStorage = utils::RxStorage<rx_storage_size>;
     void ErrorHandler(){
-        assert(false);
+//        assert(false);
 //        __HAL_UART_CLEAR_IT(handle_, UART_CLEAR_FEF);
 //        __HAL_UART_CLEAR_IT(handle_, UART_CLEAR_NEF);
 //        __HAL_UART_CLEAR_IT(handle_, UART_CLEAR_OREF);
@@ -17,27 +17,28 @@ struct Port final: InterfacePort<HandleT, Task, tasks_queue_size>{
 //        __HAL_UART_CLEAR_IDLEFLAG(handle_);
 //        __HAL_UART_CLEAR_OREFLAG(handle_);
 //        __HAL_UART_CLEAR_FEFLAG(handle_);
-
 //        __HAL_UART_RESET_HANDLE_STATE(handle_);
 //        auto error = HAL_UART_GetError(handle_);
-//        HAL_UART_Init(handle_);
     }
 
     void StartReading(){
-        rx_pack_.setPending();
-        HAL_UARTEx_ReceiveToIdle_DMA(handle_, rx_pack_.data().data(), rx_pack_.size());
+        rx_packet_.setPending();
+        HAL_UARTEx_ReceiveToIdle_DMA(handle_, rx_packet_.data(), rx_packet_.size());
     }
 
     void RxHandlerSize(auto size){
-        rx_pack_.setReady(size);
+        rx_packet_.setReady(size);
     }
 
-    bool GetPack(auto& pack){
-        if(!rx_pack_.isReady())
+    bool GrabPacket(auto& packet){
+        if(!rx_packet_.isReady())
             return false;
-        pack = rx_pack_;
+        packet = rx_packet_;
         StartReading();
         return true;
+    }
+    auto GetPackPtr(){
+        return &rx_packet_;
     }
 
 protected:
@@ -60,7 +61,7 @@ protected:
 
     }
 private:
-    RxStorage rx_pack_;
+    RxStorage rx_packet_;
 };
 
 }//namespace connectivity::uart

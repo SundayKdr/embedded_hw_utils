@@ -5,7 +5,7 @@
 #include <ranges>
 #include <cstring>
 
-#include "embedded_hw_utils/utils/rx_packet.hpp"
+#include "embedded_hw_utils/utils/socket_packet.hpp"
 #include "embedded_hw_utils/utils/tx_data_pair.hpp"
 
 namespace utils{

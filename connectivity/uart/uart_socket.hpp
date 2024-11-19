@@ -2,7 +2,7 @@
 
 #include <ranges>
 
-#include "embedded_hw_utils/utils/rx_packet.hpp"
+#include "embedded_hw_utils/utils/socket_packet.hpp"
 #include "embedded_hw_utils/utils/storages/tx_storage.hpp"
 #include "embedded_hw_utils/connectivity/uart/uart_driver.hpp"
 
@@ -17,14 +17,12 @@ concept DavaViewConcept = requires(T t)
 };
 
 template<typename User,
-            std::size_t rx_packet_size,
-            std::size_t tx_storage_size_,
-            std::size_t rx_update_rate_hz,
-            bool use_crc_on_tx
+            bool use_crc_on_tx = true,
+            std::size_t rx_update_rate_hz = 300
         >
 struct Socket{
-    using RxPacket = utils::RxPacket<rx_packet_size>;
-    using TxStorage = utils::TxStorage<tx_storage_size_, use_crc_on_tx>;
+    using SocketPacket = utils::SocketPacket<rx_storage_size>;
+    using TxStorage = utils::TxStorage<tx_storage_size, use_crc_on_tx>;
 
     Socket(HandleT uart_h, User* user)
         : uart_handle_(uart_h)
@@ -51,20 +49,14 @@ protected:
     User* user_;
     HandleT uart_handle_;
     TxStorage tx_storage_;
-    Port::RxStorage rx_storage_;
-    RxPacket assembled_packet_;
+    Port::RxStorage rx_packet_;
+    SocketPacket socket_packet_;
 
     void HandleMsg(){
-        auto size = rx_storage_.getRxSize();
-        if(size == RxPacket::pack_size)
-            assembled_packet_.Reset();
-
-        assembled_packet_.PlaceData(rx_storage_.dataView(size));
-
-        if(assembled_packet_.isReady()){
-            user_->ProcessPacket(assembled_packet_.GetPayloadView());
-            assembled_packet_.Reset();
-        }
+        socket_packet_.Reset();
+        socket_packet_.PlaceData(rx_packet_.dataView());
+        if(socket_packet_.CheckCRC())
+            user_->ProcessPacket(socket_packet_.GetPayloadView());
     }
 
     void SendToUART(){
@@ -75,9 +67,9 @@ protected:
     void Start(){
         Port(uart_handle_)->StartReading();
         $RunAsync({
-            if(Port(self->uart_handle_)->GetPack(self->rx_storage_))
+            if(Port(self->uart_handle_)->GrabPacket(self->rx_packet_))
                 self->HandleMsg();
-        }, rx_update_rate_hz);
+        },rx_update_rate_hz);
     }
 };
 

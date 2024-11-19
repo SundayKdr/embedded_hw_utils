@@ -9,7 +9,7 @@
 namespace connectivity::uart{
 
 struct Driver final: InterfaceDriver<Port, interface_cnt>{
-    static Driver& global(){
+     static Driver& global(){
         static auto instance = Driver();
         return instance;
     }

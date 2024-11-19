@@ -44,7 +44,7 @@ namespace timers::pwm{
         uint16_t up_pwm_limit_{UINT16_MAX};
         TIM_HandleTypeDef* handle_{};
         uint32_t tim_channel_{};
-        uint32_t timer_tick_Hz_;
-        float current_tim_arr_;
+        uint32_t timer_tick_Hz_{};
+        float current_tim_arr_{};
     };
 }//namespace timers::pwm
