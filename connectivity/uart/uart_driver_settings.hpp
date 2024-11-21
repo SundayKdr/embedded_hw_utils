@@ -4,7 +4,6 @@
     * @brief to use:
     * impl in namespace connectivity::uart:
 */
-
 namespace connectivity::uart{
 //    constexpr std::size_t interface_cnt {1};
 //    constexpr std::size_t tasks_queue_size {8};

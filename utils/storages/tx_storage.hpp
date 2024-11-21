@@ -13,6 +13,7 @@ namespace utils{
 template<std::size_t storage_size, bool crc_packet>
 struct TxStorage{
     static constexpr std::size_t dlc_width = 1;
+    static constexpr std::size_t crc_width = 2;
     auto& at(auto idx){
         return data_.at(idx);
     }
@@ -81,7 +82,7 @@ protected:
     template<typename T, std::size_t N>
     void PlaceValue(T(&array)[N])
     {
-        auto size = sizeof(T) * N - 1;
+        auto size = sizeof(T) * N;
         assert(FitsInRange(size));
         std::memcpy(currentDataIt(), array, size);
         MoveCursor(size);
@@ -91,7 +92,7 @@ protected:
     void PlaceValue(T&& array)
         requires(std::is_bounded_array<T>::value)
     {
-        auto size = sizeof(T) * array.size() - 1;
+        auto size = sizeof(T) * array.size();
         assert(FitsInRange(size));
         std::memcpy(currentDataIt(), array.begin(), size);
         MoveCursor(size);
@@ -116,6 +117,8 @@ protected:
 
     void PlaceDlc(){
         data_[0] = cursor() - dlc_width;
+        if constexpr(crc_packet)
+            data_[0] = data_[0] - crc_width;
     }
 
     void PlaceCRC(){

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <bit>
 
 namespace analog::adc{
 
@@ -31,21 +32,23 @@ struct AdcResult
         return results_storage_.data();
     }
 
-    std::optional<float> GetValue(uint8_t channel)
+    std::optional<float> GetValue(uint8_t sequencer_pos)
     {
         std::optional<float> value_opt;
-        if(count_[channel]){
-            value_opt = static_cast<float>(sum_[channel])/static_cast<float>(count_[channel]);
-            sum_[channel] = 0; count_[channel] = 0;
+        if(count_[sequencer_pos]){
+            value_opt = static_cast<float>(sum_[sequencer_pos]) / static_cast<float>(count_[sequencer_pos]);
+            sum_[sequencer_pos] = 0; count_[sequencer_pos] = 0;
         }
         return value_opt;
     }
-
+    void SetChannelCnt(uint8_t cnt){
+        channels_ = cnt;
+    }
 private:
     uint8_t channels_{0};
-	std::array<uint32_t, max_channels> results_storage_{};
-    std::array<uint32_t, max_channels> sum_{};
-    std::array<uint32_t, max_channels> count_{};
+	std::array<uint32_t, max_channels> results_storage_{0,};
+    std::array<uint32_t, max_channels> sum_{0,};
+    std::array<uint32_t, max_channels> count_{0,};
 };
 
 }//namespace analog::adc

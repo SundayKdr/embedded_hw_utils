@@ -8,11 +8,11 @@ namespace analog::adc{
 
 struct AdcDma{
     AdcDma() = default;
-    AdcDma(ADC_HandleTypeDef* handle, uint8_t channel_count)
-        : handle_(handle)
-        , result_(channel_count)
-    {
-        HAL_ADCEx_Calibration_Start(handle, ADC_SINGLE_ENDED);
+
+    void Start(ADC_HandleTypeDef* handle, uint8_t channel_count){
+        handle_ = handle;
+        result_.SetChannelCnt(channel_count);
+        HAL_ADCEx_Calibration_Start(handle);
         HAL_ADC_Start_DMA(handle, result_.GetStoragePtr(), channel_count);
     }
 
@@ -28,12 +28,12 @@ struct AdcDma{
         result_.StoreResults();
     }
 
-    ADC_HandleTypeDef* GetHandle(){
+    auto GetHandle(){
         return handle_;
     }
 
-    auto GetResult(uint8_t channel){
-        return result_.GetValue(channel);
+    auto GetResult(uint8_t sequencer_pos){
+        return result_.GetValue(sequencer_pos);
     }
 private:
     AdcResult result_{};
@@ -41,10 +41,9 @@ private:
 };
 
 struct Dispatcher{
-    static constexpr uint8_t adc_cnt{2};
     static Dispatcher& global(){
-        static Dispatcher dispatcher{};
-        return dispatcher;
+        static auto instance = Dispatcher();
+        return instance;
     }
 
     void ProcessADCCallBack(ADC_HandleTypeDef* handle){
@@ -54,12 +53,12 @@ struct Dispatcher{
 
     void PlaceADC(std::pair<ADC_HandleTypeDef*,uint8_t> adc_config_pair){
         assert(cnt_ < adc_cnt);
-        adc_storage_[cnt_++] = {adc_config_pair.first, adc_config_pair.second};
+        adc_storage_[cnt_++].Start(adc_config_pair.first, adc_config_pair.second);
     }
 
-    std::optional<float> GetValue(ADC_HandleTypeDef* handle, uint8_t channel){
+    std::optional<float> GetValue(ADC_HandleTypeDef* handle, uint8_t sequencer_pos){
         if(auto it = std::ranges::find(adc_storage_, handle, &AdcDma::GetHandle); it != adc_storage_.end())
-            return it->GetResult(channel);
+            return it->GetResult(sequencer_pos);
         return{};
     }
     void ProcessADCErrorCallBack(ADC_HandleTypeDef* handle){
