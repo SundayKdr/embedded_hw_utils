@@ -31,14 +31,14 @@ struct Port final: InterfacePort<HandleT, Task, tasks_queue_size>{
     }
 
     bool GrabPacket(auto& packet){
-        if(!rx_packet_.isReady())
+        if(!rx_packet_.isReady()) {
+            if(handle_->RxState == HAL_UART_STATE_READY)
+                HAL_UARTEx_ReceiveToIdle_DMA(handle_, rx_packet_.data(), rx_packet_.size());
             return false;
+        }
         packet = rx_packet_;
         StartReading();
         return true;
-    }
-    auto GetPackPtr(){
-        return &rx_packet_;
     }
 
 protected:

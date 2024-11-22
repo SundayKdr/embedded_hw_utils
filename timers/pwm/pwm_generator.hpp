@@ -6,13 +6,12 @@
 namespace timers::pwm{
     struct PWMGenerator{
 
-        PWMGenerator() = default;
-        PWMGenerator(TIM_HandleTypeDef* handle, uint32_t channel)
-            : handle_(handle)
-            , tim_channel_(channel)
+        PWMGenerator() = delete;
+        PWMGenerator(std::pair<TIM_HandleTypeDef*, uint32_t> specs)
+            : handle_(specs.first)
+            , tim_channel_(specs.second)
         {
-            timer_tick_Hz_ = SystemCoreClock / (handle->Instance->PSC);
-            current_tim_arr_ = __HAL_TIM_GET_AUTORELOAD(handle);
+            timer_tick_Hz_ = SystemCoreClock / (handle_->Instance->PSC);
         }
 
         void SetPWMLimit(float percentage){
@@ -20,6 +19,9 @@ namespace timers::pwm{
         }
 
         void Start(){
+            timer_tick_Hz_ = SystemCoreClock / (handle_->Instance->PSC);
+            current_tim_arr_ = __HAL_TIM_GET_AUTORELOAD(handle_);
+            __HAL_TIM_SET_COMPARE(handle_, tim_channel_, 0);
             HAL_TIM_PWM_Start(handle_, tim_channel_);
         }
 
@@ -33,6 +35,7 @@ namespace timers::pwm{
         }
 
         [[gnu::always_inline]] void SetPulseWidth(float percentage){
+            assert(percentage <= 100 && percentage >= 0);
             auto new_ccr_v = static_cast<uint16_t>(current_tim_arr_ / 100 * percentage);
             if(new_ccr_v < up_pwm_limit_)
                 __HAL_TIM_SET_COMPARE(handle_, tim_channel_, new_ccr_v);

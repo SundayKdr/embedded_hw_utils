@@ -18,7 +18,7 @@ concept DavaViewConcept = requires(T t)
 
 template<typename User,
             bool use_crc_on_tx = true,
-            std::size_t rx_update_rate_hz = 300
+            std::size_t rx_update_rate_hz = UINT32_MAX
         >
 struct Socket{
     using SocketPacket = utils::SocketPacket<rx_storage_size>;
