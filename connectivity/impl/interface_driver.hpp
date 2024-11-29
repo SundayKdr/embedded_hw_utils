@@ -20,7 +20,7 @@ struct InterfaceDriver{
     }
 
     InterfaceDriver(){
-        $RunAsync({ self->ProcessTasks();});
+        $RunAsync(ProcessTasks());
     }
 
     template<typename ...Types>

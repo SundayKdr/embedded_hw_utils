@@ -79,8 +79,9 @@ protected:
         MoveCursor(1);
     }
 
-    template<typename T, std::size_t N>
+    template<typename T, std::size_t N, typename Trr = std::remove_cvref_t<T>>
     void PlaceValue(T(&array)[N])
+    requires(!std::same_as<Trr, char>)
     {
         auto size = sizeof(T) * N;
         assert(FitsInRange(size));
@@ -88,11 +89,31 @@ protected:
         MoveCursor(size);
     }
 
-    template<typename T>
+    template<typename T, std::size_t N, typename Trr = std::remove_cvref_t<T>>
+    void PlaceValue(T(&array)[N])
+    requires(std::same_as<Trr, char>)
+    {
+        auto size = sizeof(T) * N - 1;
+        assert(FitsInRange(size));
+        std::memcpy(currentDataIt(), array, size);
+        MoveCursor(size);
+    }
+
+    template<typename T, typename Trr = std::remove_cvref_t<T>>
     void PlaceValue(T&& array)
-        requires(std::is_bounded_array<T>::value)
+        requires(std::is_bounded_array<T>::value && !std::same_as<Trr, char>)
     {
         auto size = sizeof(T) * array.size();
+        assert(FitsInRange(size));
+        std::memcpy(currentDataIt(), array.begin(), size);
+        MoveCursor(size);
+    }
+
+    template<typename T, typename Trr = std::remove_cvref_t<T>>
+    void PlaceValue(T&& array)
+    requires(std::is_bounded_array<T>::value && std::same_as<Trr, char>)
+    {
+        auto size = sizeof(T) * array.size() - 1;
         assert(FitsInRange(size));
         std::memcpy(currentDataIt(), array.begin(), size);
         MoveCursor(size);

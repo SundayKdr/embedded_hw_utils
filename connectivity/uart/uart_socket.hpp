@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ranges>
+#include <limits>
 
 #include "embedded_hw_utils/utils/socket_packet.hpp"
 #include "embedded_hw_utils/utils/storages/tx_storage.hpp"
@@ -18,7 +19,7 @@ concept DavaViewConcept = requires(T t)
 
 template<typename User,
             bool use_crc_on_tx = true,
-            std::size_t rx_update_rate_hz = UINT32_MAX
+            float rx_update_rate_hz = std::numeric_limits<float>::max()
         >
 struct Socket{
     using SocketPacket = utils::SocketPacket<rx_storage_size>;
@@ -64,12 +65,14 @@ protected:
         tx_storage_.Reset();
     }
 
+    void CheckPort(){
+        if(Port(uart_handle_)->GrabPacket(rx_packet_))
+            HandleMsg();
+    }
+
     void Start(){
         Port(uart_handle_)->StartReading();
-        $RunAsync({
-            if(Port(self->uart_handle_)->GrabPacket(self->rx_packet_))
-                self->HandleMsg();
-        },rx_update_rate_hz);
+        $RunAsync(CheckPort(), rx_update_rate_hz);
     }
 };
 
