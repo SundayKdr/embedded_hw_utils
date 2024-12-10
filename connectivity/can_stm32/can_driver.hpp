@@ -63,7 +63,7 @@ struct Driver{
 
 private:
     Driver(){
-        $RunAsync( {self->PollPort();});
+        $RunAsync(PollPort());
     }
 
     void PollPort()
